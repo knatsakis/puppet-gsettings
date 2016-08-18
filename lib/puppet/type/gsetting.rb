@@ -28,8 +28,8 @@ Puppet::Type.newtype(:gsetting) do #▶
 
   newproperty(:value, :array_matching => :all) do #▶
     validate do |value|
-      if value.class != String
-        raise Puppet::Error, 'value should be a String or Array of Strings'
+      unless [String, FalseClass, TrueClass].include?(value.class)
+        raise Puppet::Error, "value should be a String, Boolean or Array of Strings"
       end
     end
   end #◀

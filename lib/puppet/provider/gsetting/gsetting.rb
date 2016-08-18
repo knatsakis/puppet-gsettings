@@ -18,7 +18,11 @@ Puppet::Type.type(:gsetting).provide(:gsetting) do #▶
     if resource[:value].size != 1
       settings.set_strv(resource[:key], resource[:value])
     else
-      settings.set_string(resource[:key], resource[:value].first.to_s)
+      if resource[:value].class == String
+        settings.set_string(resource[:key], resource[:value].first)
+      else
+        settings.set_boolean(resource[:key], resource[:value].first)
+      end
     end
   end #◀
 end #◀
