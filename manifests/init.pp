@@ -3,7 +3,7 @@ class gsettings {
     ensure => installed,
   } ->
   package { 'gio2':
-    ensure   => installed,
+    ensure   => latest,
     provider => 'puppet_gem',
   }
 }
