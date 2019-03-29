@@ -7,6 +7,6 @@ class gsettings {
   } ->
   package { 'gio2':
     ensure   => latest,
-    provider => 'puppet_gem',
+    provider => puppet_gem,
   }
 }
