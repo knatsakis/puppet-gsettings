@@ -7,20 +7,25 @@ Puppet::Type.type(:gsetting).provide(:gsetting) do
   def value
     settings = Gio::Settings::new(resource[:schema])
 
-    return [ settings.get_value(resource[:key]) ].flatten
+    return settings.get_value(resource[:key])
   end
 
   def value=(value)
     settings = Gio::Settings::new(resource[:schema])
 
-    if resource[:value].size != 1
-      settings.set_strv(resource[:key], resource[:value])
-    else
-      if resource[:value].class == String
-        settings.set_string(resource[:key], resource[:value].first)
-      else
-        settings.set_boolean(resource[:key], resource[:value].first)
-      end
+    # puts "value= #{value}"
+
+    # Decapsulate because should= encapsulates all values in an Array
+    value = value.first
+
+    if value.is_a?(Array) then
+      settings.set_strv(resource[:key], value)
+    elsif value.is_a?(FalseClass)
+      settings.set_boolean(resource[:key], value)
+    elsif value.is_a?(String)
+      settings.set_string(resource[:key], value)
+    elsif value.is_a?(TrueClass)
+      settings.set_boolean(resource[:key], value)
     end
   end
 end
