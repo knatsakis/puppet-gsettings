@@ -1,10 +1,9 @@
 class gsettings {
   package {
-    [
-      'libglib2.0-dev',
-      'libgirepository1.0-dev',
-    ]:
-      ensure => installed,
+    'libglib2.0-dev':
+      ensure => installed;
+    'libgirepository1.0-dev':
+      ensure => installed;
   } ->
   package { 'gio2':
     ensure   => installed,
