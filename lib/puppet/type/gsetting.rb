@@ -1,14 +1,33 @@
-# vim: set expandtab shiftwidth=2 softtabstop=2:
 Puppet::Type.newtype(:gsetting) do
   def self.title_patterns
-    [ [ /^(.+)[.](.+)$/, [ [:schema], [:key] ] ] ]
+    [ [ /(.*)/, [ [:key] ] ] ]
   end
 
   newparam(:schema) do
     isnamevar
 
     validate do |value|
-      raise Puppet::Error, 'schema should be a String' unless value.is_a?(String)
+      if !value.is_a?(String)
+        raise ArgumentError, _("Schema must be a String not %{klass}") % { klass: value.class }
+      end
+    end
+  end
+
+  newparam(:path) do
+    isnamevar
+
+    validate do |value|
+      if !value.is_a?(String) and !value.nil?
+        raise ArgumentError, _("Path must be a String not %{klass}") % { klass: value.class }
+      end
+
+      if value !~ %r!^/.+/$!
+        raise ArgumentError, "Path must start and end with a '/' character"
+      end
+
+      if value =~ %r!//!
+        raise ArgumentError, "Path must not contain two consecutive '/' characters"
+      end
     end
   end
 
@@ -16,7 +35,19 @@ Puppet::Type.newtype(:gsetting) do
     isnamevar
 
     validate do |value|
-      raise Puppet::Error, 'key should be a String' unless value.is_a?(String)
+      if !value.is_a?(String)
+        raise ArgumentError, _("Key must be a String not %{klass}") % { klass: value.class }
+      end
+    end
+  end
+
+  newparam(:user) do
+    isnamevar
+
+    validate do |value|
+      if !value.is_a?(String)
+        raise ArgumentError, _("User must be a String not %{klass}") % { klass: value.class }
+      end
     end
   end
 
@@ -57,9 +88,14 @@ Puppet::Type.newtype(:gsetting) do
     validate do |value|
       # puts "validate #{value}"
 
-      if [ Array, FalseClass, String, TrueClass ].none? { |klass| value.is_a?(klass) } then
-        raise Puppet::Error, "value should be an Array, Boolean or String"
+      if [ Array, FalseClass, TrueClass, Integer, String ].none? { |klass| value.is_a?(klass) } then
+        raise Puppet::Error, "value should be an Array, Boolean, Integer or String"
       end
     end
   end
+
+  autorequire(:user) do
+    [ self[:user] ]
+  end
+
 end

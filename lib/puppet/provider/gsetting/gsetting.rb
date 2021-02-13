@@ -1,31 +1,72 @@
-# vim: set expandtab shiftwidth=2 softtabstop=2:
 require 'gio2' if Puppet.features.gio2?
+require 'etc'
 
 Puppet::Type.type(:gsetting).provide(:gsetting) do
   confine :feature => :gio2
 
   def value
-    settings = Gio::Settings::new(resource[:schema])
+    uid = Etc.getpwnam(resource[:user]).uid
 
-    return settings.get_value(resource[:key])
+    reader, writer = IO.pipe
+
+    fork do
+      reader.close
+
+      ENV.clear
+      ENV['DBUS_SESSION_BUS_ADDRESS'] = "unix:path=/run/user/#{uid}/bus"
+
+      Process::Sys.setuid(uid)
+
+      if resource[:path].nil?
+        settings = Gio::Settings::new(resource[:schema])
+      else
+        settings = Gio::Settings::new(resource[:schema], options = { path: resource[:path] })
+      end
+
+      writer.write(Marshal.dump(settings.get_value(resource[:key])))
+    end
+
+    writer.close
+
+    return Marshal.load(reader.gets(nil))
   end
 
   def value=(value)
-    settings = Gio::Settings::new(resource[:schema])
+    uid = Etc.getpwnam(resource[:user]).uid
 
-    # puts "value= #{value}"
+    reader, writer = IO.pipe
 
-    # Decapsulate because should= encapsulates all values in an Array
-    value = value.first
+    fork do
+      reader.close
 
-    if value.is_a?(Array) then
-      settings.set_strv(resource[:key], value)
-    elsif value.is_a?(FalseClass)
-      settings.set_boolean(resource[:key], value)
-    elsif value.is_a?(String)
-      settings.set_string(resource[:key], value)
-    elsif value.is_a?(TrueClass)
-      settings.set_boolean(resource[:key], value)
+      ENV.clear
+      ENV['DBUS_SESSION_BUS_ADDRESS'] = "unix:path=/run/user/#{uid}/bus"
+
+      Process::Sys.setuid(uid)
+
+      if resource[:path].nil?
+        settings = Gio::Settings::new(resource[:schema])
+      else
+        settings = Gio::Settings::new(resource[:schema], options = { path: resource[:path] })
+      end
+
+      # Decapsulate because should= encapsulates all values in an Array
+      value = value.first
+
+      case value
+      when Array
+        settings.set_strv(resource[:key], value)
+      when FalseClass
+        settings.set_boolean(resource[:key], value)
+      when TrueClass
+        settings.set_boolean(resource[:key], value)
+      when Integer
+        settings.set_int(resource[:key], value)
+      when String
+        settings.set_string(resource[:key], value)
+      end
     end
+
+    writer.close
   end
 end
