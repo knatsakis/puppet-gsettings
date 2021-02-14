@@ -25,10 +25,12 @@ Puppet::Type.type(:gsetting).provide(:gsetting) do
 
       writer.write(Marshal.dump(settings.get_value(resource[:key])))
     end
-
     writer.close
 
-    return Marshal.load(reader.gets(nil))
+    value = Marshal.load(reader.gets(nil))
+
+    Process.waitall
+    return value
   end
 
   def value=(value)
@@ -53,7 +55,8 @@ Puppet::Type.type(:gsetting).provide(:gsetting) do
       # Decapsulate because should= encapsulates all values in an Array
       settings.set_value(resource[:key], value.first)
     end
-
     writer.close
+
+    Process.waitall
   end
 end
