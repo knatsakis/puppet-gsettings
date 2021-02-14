@@ -51,20 +51,7 @@ Puppet::Type.type(:gsetting).provide(:gsetting) do
       end
 
       # Decapsulate because should= encapsulates all values in an Array
-      value = value.first
-
-      case value
-      when Array
-        settings.set_strv(resource[:key], value)
-      when FalseClass
-        settings.set_boolean(resource[:key], value)
-      when TrueClass
-        settings.set_boolean(resource[:key], value)
-      when Integer
-        settings.set_int(resource[:key], value)
-      when String
-        settings.set_string(resource[:key], value)
-      end
+      settings.set_value(resource[:key], value.first)
     end
 
     writer.close

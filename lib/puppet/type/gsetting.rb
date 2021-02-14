@@ -97,5 +97,4 @@ Puppet::Type.newtype(:gsetting) do
   autorequire(:user) do
     [ self[:user] ]
   end
-
 end
